@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package szoftechtutor;
+package hazi;
 
 /**
  *
@@ -16,7 +16,7 @@ public class Main {
 	 *            the command line arguments
 	 */
 	public static void main(String[] args) {
-		Control c = new Control();
+		Logic c = new Logic();
 		GUI g = new GUI(c);
 		c.setGUI(g);
 	}

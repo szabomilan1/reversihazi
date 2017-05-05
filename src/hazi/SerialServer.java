@@ -1,4 +1,4 @@
-package szoftechtutor;
+package hazi;
 
 import java.awt.Point;
 import java.io.IOException;
@@ -9,14 +9,14 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SerialServer extends Network {
+public class SerialServer extends Network implements IGameState{
 
 	private ServerSocket serverSocket = null;
 	private Socket clientSocket = null;
 	private ObjectOutputStream out = null;
 	private ObjectInputStream in = null;
 
-	SerialServer(Control c) {
+	SerialServer(Logic c) {
 		super(c);
 	}
 
@@ -98,5 +98,11 @@ public class SerialServer extends Network {
 			Logger.getLogger(SerialServer.class.getName()).log(Level.SEVERE,
 					null, ex);
 		}
+	}
+
+	@Override
+	public void onNewGameState(GameState gs) {
+		// TODO Auto-generated method stub
+		
 	}
 }

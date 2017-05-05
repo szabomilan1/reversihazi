@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package szoftechtutor;
+package hazi;
 
 import java.awt.Point;
 
@@ -12,9 +12,9 @@ import java.awt.Point;
  */
 abstract class Network {
 
-	protected Control ctrl;
+	protected Logic ctrl;
 
-	Network(Control c) {
+	Network(Logic c) {
 		ctrl = c;
 	}
 

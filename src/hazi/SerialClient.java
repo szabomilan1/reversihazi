@@ -1,17 +1,17 @@
-package szoftechtutor;
+package hazi;
 
 import java.awt.Point;
 import java.io.*;
 import java.net.*;
 import javax.swing.JOptionPane;
 
-public class SerialClient extends Network {
+public class SerialClient extends Network implements ICommand{
 
 	private Socket socket = null;
 	private ObjectOutputStream out = null;
 	private ObjectInputStream in = null;
 
-	SerialClient(Control c) {
+	SerialClient(Logic c) {
 		super(c);
 	}
 
@@ -78,5 +78,11 @@ public class SerialClient extends Network {
 		} catch (IOException ex) {
 			System.err.println("Error while closing conn.");
 		}
+	}
+
+	@Override
+	public void onNewCommand(Command c) {
+		// TODO Auto-generated method stub
+		
 	}
 }

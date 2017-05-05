@@ -3,20 +3,22 @@
  * and open the template in the editor.
  */
 
-package szoftechtutor;
+package hazi;
 
 import java.awt.Point;
+import java.util.ArrayList;
 
 /**
  *
  * @author Predi
  */
-class Control {
+class Logic implements ICommand{
 
 	private GUI gui;
 	private Network net = null;
-
-	Control() {
+	private ArrayList<Command> commandsSinceLastProc;
+	
+	Logic() {
 	}
 
 	void setGUI(GUI g) {
@@ -28,7 +30,7 @@ class Control {
 			net.disconnect();
 		net = new SerialServer(this);
 		net.connect("localhost");
-	}
+	} 
 
 	void startClient() {
 		if (net != null)
@@ -48,5 +50,10 @@ class Control {
 		if (gui == null)
 			return;
 		gui.addPoint(p);
+	}
+
+	public void onNewCommand(Command c) {
+		// TODO Auto-generated method stub
+		
 	}
 }

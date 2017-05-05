@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package szoftechtutor;
+package hazi;
 
 import java.awt.Graphics;
 import java.awt.Point;
@@ -22,13 +22,13 @@ import javax.swing.JPanel;
  *
  * @author Predi
  */
-public class GUI extends JFrame {
+public class GUI extends JFrame implements IGameState{
 
 	private static final long serialVersionUID = 1L;
-	private Control ctrl;
+	private Logic ctrl;
 	private DrawPanel drawPanel;
 
-	GUI(Control c) {
+	GUI(Logic c) {
 		super("SzoftechTutor");
 		ctrl = c;
 		setSize(500, 350);
@@ -119,5 +119,11 @@ public class GUI extends JFrame {
 				g.drawOval(p.x, p.y, 10, 10);
 			}
 		}
+	}
+
+	@Override
+	public void onNewGameState(GameState gs) {
+		// TODO Auto-generated method stub
+		
 	}
 }
