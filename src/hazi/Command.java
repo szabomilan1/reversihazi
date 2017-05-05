@@ -9,10 +9,10 @@ public class Command implements Serializable{
 	
 	private static final long serialVersionUID = 1L;
 	
-	public Integer commandCode;
-	Command(int c)
+	Command()
 	{
-		commandCode = c;
+		clickedField = -1;
+		playerNewGame = false;
 	}
 	
 }

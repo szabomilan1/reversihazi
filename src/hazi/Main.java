@@ -19,5 +19,7 @@ public class Main {
 		Logic c = new Logic();
 		GUI g = new GUI(c);
 		c.setGUI(g);
+
+		
 	}
 }

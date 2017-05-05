@@ -26,6 +26,7 @@ public class SerialServer extends Network implements IGameState{
 			try {
 				System.out.println("Waiting for Client");
 				clientSocket = serverSocket.accept();
+				ctrl.newGame();
 				System.out.println("Client connected.");
 			} catch (IOException e) {
 				System.err.println("Accept failed.");
@@ -46,7 +47,7 @@ public class SerialServer extends Network implements IGameState{
 			try {
 				while (true) {
 					Point received = (Point) in.readObject();
-					ctrl.clickReceived(received);
+					//ctrl.clickReceived(received);
 				}
 			} catch (Exception ex) {
 				System.out.println(ex.getMessage());

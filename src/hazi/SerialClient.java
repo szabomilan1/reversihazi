@@ -22,7 +22,7 @@ public class SerialClient extends Network implements ICommand{
 			try {
 				while (true) {
 					Point received = (Point) in.readObject();
-					ctrl.clickReceived(received);
+					System.out.println(received);
 				}
 			} catch (Exception ex) {
 				System.out.println(ex.getMessage());

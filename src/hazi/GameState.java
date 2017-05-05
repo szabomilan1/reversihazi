@@ -7,7 +7,8 @@ public class GameState implements Serializable{
 	public int time;
 	public char turn;		// w: white, b: black
 	public char[][] table;	// e: empty, b: black, w: white, p: white possible
-							// p: possible black, v: possible white 
+							// p: possible black, v: possible white
+	public int points;
 	
 	private static final long serialVersionUID = 1L;
 

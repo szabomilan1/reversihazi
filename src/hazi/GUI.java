@@ -88,7 +88,7 @@ public class GUI extends JFrame implements IGameState{
 			@Override
 			public void mousePressed(MouseEvent e) {
 				// System.out.println("X:" + e.getX() + " Y:" + e.getY());
-				ctrl.sendClick(new Point(e.getX(), e.getY()));
+				//ctrl.sendClick(new Point(e.getX(), e.getY()));
 			}
 		});
 		add(inputPanel);
