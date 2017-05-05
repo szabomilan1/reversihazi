@@ -73,22 +73,22 @@ class Logic implements ICommand{
 		char oppPiece = (gs.turn == 'b') ? 'w' : 'b';
 		
 		boolean valid = false;
-		
+		boolean endWhile = false;
 		for (int i = 0; i < 8 && valid == false; ++i) {
 			int curRow = row + rowOffset[i];
 			int curCol = col + colOffset[i];
-			boolean hasOppPieceBetween = false;
-			while (curRow >=0 && curRow < 8 && curCol >= 0 && curCol < 8) {
+			endWhile = false;
+			boolean oppPieceBetween = false;
+			while (curRow >=0 && curRow < 8 && curCol >= 0 && curCol < 8 && endWhile == false) {
 				
 				if (gs.table[curRow][curCol] == oppPiece)
-					hasOppPieceBetween = true;
-				else if ((gs.table[curRow][curCol] == gs.turn) && hasOppPieceBetween)
+					oppPieceBetween = true;
+				else if ((gs.table[curRow][curCol] == gs.turn) && oppPieceBetween)
 				{
 					valid = true;
-					break;
 				}
 				else
-					break;
+					endWhile = true;
 				
 				curRow += rowOffset[i];
 				curCol += colOffset[i];
