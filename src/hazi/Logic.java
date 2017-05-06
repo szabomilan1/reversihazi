@@ -49,16 +49,16 @@ class Logic implements ICommand{
 
 	void startServer() {
 		if (net != null)
-			net.disconnect();
-		net = new SerialServer(this);
-		net.connect("localhost");
+			net.stop();
+		net = new Server(this,gui);
+		net.start("localhost");
 	} 
 
 	void startClient() {
 		if (net != null)
-			net.disconnect();
-		net = new SerialClient(this);
-		net.connect("localhost");
+			net.stop();
+		net = new Client(gui);
+		net.start("localhost");
 	}
 	
 	public boolean validMove(int field) {

@@ -25,12 +25,12 @@ import javax.swing.JPanel;
 public class GUI extends JFrame implements IGameState{
 
 	private static final long serialVersionUID = 1L;
-	private Logic ctrl;
+	private Logic logic;
 	private DrawPanel drawPanel;
 
-	GUI(Logic c) {
+	GUI(Logic l) {
 		super("SzoftechTutor");
-		ctrl = c;
+		logic = l;
 		setSize(500, 350);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setLayout(null);
@@ -43,7 +43,7 @@ public class GUI extends JFrame implements IGameState{
 		menuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ctrl.startClient();
+				logic.startClient();
 			}
 		});
 		menu.add(menuItem);
@@ -52,7 +52,7 @@ public class GUI extends JFrame implements IGameState{
 		menuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ctrl.startServer();
+				logic.startServer();
 			}
 		});
 		menu.add(menuItem);
