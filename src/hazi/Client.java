@@ -7,31 +7,71 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.locks.ReentrantLock;
 
-
+/**
+ * Kliens hálózati interfész implementálása.
+ * 
+ * Megvalósítja a Network absztrakt osztály függvényeit, továbbá implementálja az ICommand interfészt,
+ * így ezáltal parancsok fogadására és továbbküldésére is alkalmas.
+ * 
+ * A kliens példányosítása után egy külön szálat hoz létre, ebben próbálkozik a szerverhez csatlakozni,
+ * majd a kapcsolat felépülése után ez látja el a várakozó szál szerepét. A csatlakozás alatt leblokkolja
+ * a GUI-t, hogy a felhasználó addig ne tudjon semmilyen bevitelt megadni.
+ * 
+ * Mûködése során a socketen keresztül fogadott adatfolyamot GameState objektumokká alakítja,
+ * majd ezeket továbbítja a GUI felé az IGameState interfész felhasználásával. 
+ * Emellett a GUI felõl parancsokat fogad (<code>OnNewCommand</code>, amiket a szerver felé továbbít.
+ * @author Tibi
+ *
+ */
 public class Client extends Network implements ICommand{
 	
 	private Socket socket = null;
+	/**
+	 * A kapcsolat szándékos legontását jelzõ flag. Ennek igaz értéke esetén a worker szál nem kezd további csatlakozási
+	 * kísérletekbe, hanem befejezi mûködését.
+	 */
 	private boolean exit_flag = false;
 	private ObjectOutputStream out = null;
+	/**
+	 * Az exit flag, a socket illetve az output stream párhuzamos hozzáférésektõl való védelmét látja el.
+	 */
 	private ReentrantLock lock = null;
 	
 	private ObjectInputStream in = null;
-	
+	/**
+	 * Szerver ip címe
+	 */
 	private String ip;
-	private IGameState gsInterface;
+	/**
+	 * Kliens oldali GUI.
+	 */
 	private GUI gui;
 
+	/**
+	 * A kliens feladatát megvalósító <code> Runnable </code> objektum.
+	 */
 	private ListenerWorker worker;
+	/**
+	 * A worker-t futtató szál.
+	 */
 	private Thread thread;
 	
+	/**
+	 * Konstruktor
+	 * @param gui Kliens oldali GUI.
+	 */
 	Client(GUI gui)
 	{
 		//gsInterface = g;
 		this.gui = gui;
+		gui.setCommand(this);
 		worker = new ListenerWorker();
 		lock = new ReentrantLock();
 	}
 
+	/**
+	 * A belsõ objektumok felszabadítását végzi el. Ezek: Ki és bemeneti streamek, socket.
+	 */
 	private void cleanup()
 	{
 		lock.lock();
@@ -61,13 +101,23 @@ public class Client extends Network implements ICommand{
 		}
 		lock.unlock();
 	}
+	/** 
+	 * Elindítja a kliens mûködését. Elsõ lépésben bezárja az esetlegesen éppen futó kapcsolatokat, majd egy újat indít.
+	 */
 	public void start(String ip)
 	{
+		this.ip = ip;
 		stop();
 		exit_flag=false;
 		thread = new Thread(worker);
 		thread.start();
 	}
+	/**
+	 * Megállítja a kliens mûködését.
+	 * Elsõ lépésként a socket bezárásával megakasztja a worker szál mûködését, ami ennek következtében kivétel 
+	 * dobásával kikerül a várakozó állapotból, és befejezi a mûködését.
+	 * A függvény visszatérése elõtt megvárja a worker szál befejeztét.
+	 */
 	public void stop()
 	{
 		lock.lock();
@@ -91,7 +141,16 @@ public class Client extends Network implements ICommand{
 		}
 
 	}
-	
+	/**
+	 *  A kliens mûködését megvalósító osztály.
+	 *  Futtatása során végtelen ciklusban elõször megpróbál csatlakozni a szerverhez, majd siker esetén felépíti a 
+	 *  kapcsolatot, végül fogadja a bejövõ adatfolyamot, amibõl GameState objektumokat generál és juttat el a GUI felé.
+	 *  Leállásának feltétele az exit_flag true értéke, amit a ciklus bizonyos pontjain ellenõriz.
+	 *  A szerverhez hasonlóan a csatlakozási kísérletek alatt a WinBlocker segítségével leblokkolja a kliens GUI-t.
+	 *  
+	 * @author Tibi
+	 *
+	 */
 	private class ListenerWorker implements Runnable {
 		public void run() {
 			while(true){
@@ -99,6 +158,13 @@ public class Client extends Network implements ICommand{
 				Socket s = null;
 				ObjectOutputStream o=null;
 				// Connecting
+				
+				lock.lock();
+				f = exit_flag;
+				lock.unlock();
+				if(f) {
+					return;
+				}
 				
 				WinBlocker blocker = null;
 				// Block main window
@@ -160,9 +226,11 @@ public class Client extends Network implements ICommand{
 				try {
 					while (true) {
 						GameState gs = (GameState) in.readObject();
-						gsInterface.onNewGameState(gs);
+						if(gs instanceof GameState)
+							gui.onNewGameState(gs);
 					}
 				} catch (Exception ex) {
+					ex.printStackTrace();
 					System.out.println("Disconnected");
 				} finally {
 					cleanup();
@@ -176,6 +244,9 @@ public class Client extends Network implements ICommand{
 		} // run
 	} //worker
 	
+	/**
+	 * Command objektumok küldésére szolgál a szerver felé.
+	 */
 	public void onNewCommand(Command c)
 	{
 		lock.lock();

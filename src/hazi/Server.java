@@ -7,33 +7,67 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.print.attribute.standard.JobMessageFromOperator;
 import javax.swing.JOptionPane;
 
-
+/**
+ * Szerver hálózati interfész implementálása.
+ * 
+ * Megvalósítja a Network absztrakt osztály függvényeit, továbbá implementálja az IGameState interfészt,
+ * így ezáltal játék állapotok fogadására és továbbküldésére is alkalmas.
+ * 
+ * A szerver példányosítása után egy külön szálat hoz létre, amiben elõször szerver socketet nyit 
+ * a 10007-es porton, majd várakozni kezd a kliens csatlakozására. Ennek megtörténte után felépíti
+ * a kapcsolatot, majd fogadja a beérkezõ adatfolyamot, amit Command objektumokká alakítva a Logic felé továbbít
+ * az ICommand interfészen keresztül. A játékállapotok (<code> GameState </code>) kliens felé küldésére az IGameState
+ * interfész OnNewGameState függvényével biztosít lehetõséget. 
+ * A kapcsolat megszakadása esetén újból kliens csatlakozásra vár a szerver socketen keresztül. A várakozás alatt
+ * a játéktáblát megvalósító GUI objektumot letiltja a <code> Network WinBlocker</code> alosztálya segítségével.
+ * @author Tibi
+ *
+ */
 public class Server extends Network implements IGameState{
 	
 	private ServerSocket serverSocket = null;
 	private Socket clientSocket = null;
+	/**
+	 * A kapcsolat szándékos lebontását jelzõ flag. Ennek igaz értéke esetén a worker szál nem kezd további várakozásba,
+	 * hanem befejezi mûködését.
+	 */
 	private boolean exit_flag;
 	private ObjectOutputStream out = null;
+	/**
+	 * Az exit flag, output stream, szerver és kliens socket párhuzamos hozzáférésektõl való védelmét látja el.
+	 */
 	private ReentrantLock lock = null;
 	
 	private ObjectInputStream in = null;
 	
-	private ICommand commandInterface;
+	private Logic commandInterface;
 	private GUI gui;
+	/**
+	 * A szerver mûködését megvalósító <code> Runnable </code> objektum.
+	 */
 	private ListenerWorker worker;
+	/**
+	 * A worker-t futtató szál.
+	 */
 	private Thread thread;
 	
-	Server(ICommand ci, GUI g)
+	/**
+	 * Konstruktor
+	 * @param ci A szerver oldali Logic.
+	 * @param g A szerver oldali GUI. (A csatlakozás közbeni blokkolás miatt szükséges.)
+	 */
+	Server(Logic ci, GUI g)
 	{
 		worker = new ListenerWorker();
 		commandInterface = ci;
 		this.gui = g;
 		lock = new ReentrantLock();
 	}
-
+	/**
+	 * A kliens socket, ki és bemeneti adatfolyamok bezárására szolgál.
+	 */
 	 private void cleanup()
 	{
 		 lock.lock();
@@ -64,6 +98,10 @@ public class Server extends Network implements IGameState{
 			lock.unlock();
 	}
 	
+	 /**
+	  * Elindítja a szerever mûködését. Elsõ lépésben bezárja az esetleg meglévõ kapcsolatot, majd egy
+	  * új worker szálat készít, ami ellátja a kliensekre várakozást, illetve az adatfogadást.
+	  */
 	@Override
 	void start(String ip) {
 		stop();
@@ -72,6 +110,11 @@ public class Server extends Network implements IGameState{
 		thread.start();
 	}
 	
+	/**
+	 * Megállítja a futó szerver mûködését.
+	 * Elõször bezárja a kliens és szerver socketet, ami által a worker szál kivétel dobásával
+	 * kikerül az esetleges várakozó állapotból. Végül megvárja a worker szál befejezõdését, majd visszatér.
+	 */
 	@Override
 	void stop() {
 		lock.lock();
@@ -103,6 +146,13 @@ public class Server extends Network implements IGameState{
 		}
 	}
 	
+	/**
+	 * Worker szál, ami a szerver mûködését biztosítja. Feladata a szerver socket létrehozása, kliensekre várakozás
+	 * kapcsolat felépítése, majd a bejövõ adatok fogadása.
+	 * A kapcsolat megszakadása esetén újból kliensre várakozó állapotba kerül.
+	 * @author Tibi
+	 *
+	 */
         private class ListenerWorker implements Runnable {
 		public void run() {
 			// Create server socket
@@ -133,9 +183,11 @@ public class Server extends Network implements IGameState{
 					f = exit_flag;
 					lock.unlock();
 					if(f==true) return;
+					
+					WinBlocker blocker = null;
 					try{
 						// Block main window
-						WinBlocker blocker = new WinBlocker(gui);
+						blocker = new WinBlocker(gui);
 						cs = serverSocket.accept();
 						// Release blocking
 						blocker.stop();
@@ -147,7 +199,8 @@ public class Server extends Network implements IGameState{
 							cs.close();
 							cs = null;
 						}
-					} catch (IOException ex) {
+					} catch (Exception ex) {
+						if(blocker != null) blocker.stop();
 					}
 				}
 
@@ -172,39 +225,33 @@ public class Server extends Network implements IGameState{
 				
 				// CONNECTION ESTABLISHED
 				System.out.println("Client connected.");
-
-				// TODO send comman for the commandInterface
-				/*
-				Command com = new Command(1);
-				commandInterface.onNewCommand(com);
-				com = null;
-				*/
+				commandInterface.startLogic();
 				// COMMUNICATING	
 				try {
 					while (true) {
 						Command c = (Command) in.readObject();
-						commandInterface.onNewCommand(c);
+						if(c instanceof Command)
+							commandInterface.onNewCommand(c);
 					}
 				} catch (Exception ex) {
 					System.out.println("Disconnected");
 				} finally {
 					cleanup();
-					// TODO create game state to signal to he gui
-					/*
-					Command c = new Command(-1);
-					commandInterface.onNewCommand(c);
-					*/
 				}
 			} // while
 		}//run
 	}// worker
 	
+        /**
+         * Játékállapot küldését valósítja meg a kliens felé.
+         */
 	public void onNewGameState(GameState gs)
 	{
 		lock.lock();
 		try {
 			if(out != null)
 			{
+				out.reset();
 				out.writeObject(gs);
 				out.flush();
 			}
